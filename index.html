@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Things to do today · Tdl</title>
+    <!-- favicon png -->
+    <link rel="icon" href="BSI\image\free-sticker-duck-9791169.png">
+    <!-- css stylesheet -->
+    <link rel="stylesheet" type="text/css" href="BSI\css\style.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Font file : pretendard -->
+    <link rel="stylesheet" href="BSI\font\pretendard">
+    <!-- java script -->
+    <script src="BSI\js\todo.js"></script>
+</head>
+<body>
+    <header>
+        <!-- 헤더: 페이지 제목과 메인 랜딩페이지로 돌아가기 버튼 -->
+        <h1><span>할일 등록</span></h1>
+        <button type="button" class="back-to-main">
+            <i class="fa-solid fa-people-roof" style="color: rgb(255, 182, 0);">
+                <a href="index.html" name="2조 팀 투두"></a>
+            </i>
+        </button>
+    </header>
+    <main>
+        <!-- 메인파트1 : 할일 내용 기입하고 등록하기 -->
+        <section class="todo-submit">
+            <ul>
+                <li>
+                    <span>날짜</span>
+                    <input type="date" id="date" placeholder="목표 마감일을 설정하세요.">
+                </li>
+                <li>
+                    <span>제목</span>
+                    <input type="text" id="task" placeholder="할 일의 제목을 지어주세요.">
+                </li>
+                <li>
+                    <span>내용</span>
+                    <input type="text" id="detail" placeholder="할 일이 무엇인가요?">
+                </li>
+            </ul>
+            <button type="submit">등록하기</button>
+        </section>
+        <!-- 메인파트2 : 등록된 할일 목록 확인 및 수정하기 -->
+        <section class="todo_listup">
+            <article class="todo-detail">
+                <h3><span>제목</span></h3>
+                <p>내용</p>
+                <nav>
+                    <button>삭제(완료)</button>
+                    <button>수정</button>
+                </nav>
+            </article>
+        </section>
+    </main>
+    <footer>
+        <!-- 하단 정보 : 프로젝트 제목과 발표일 등 정보 명시 -->
+        <p>@ KANT AX 1기 <br> Mini Team Project : Frontend Dev. <br>Made and Presented by Frontend Team 02 <br>Date: 2026-10-02</p>
+    </footer>
+</body>
+</html>
