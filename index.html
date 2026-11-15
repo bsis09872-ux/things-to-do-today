@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=2.0">
     <title>Things to do today · Tdl</title>
-    <!-- favicon png -->
-    <link rel="icon" href="image/free-sticker-duck-9791169.png">
+    <!-- favicon : Tdl 모노그램 (SVG 우선, 지원하지 않는 브라우저는 PNG) -->
+    <link rel="icon" href="image/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="image/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="image/apple-touch-icon.png">
     <!-- Font : Pretendard(한글 포함), Instrument Serif(포인트 이탤릭), IBM Plex Mono(라벨) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +25,7 @@
         <!-- 헤더: 날짜 정보와 페이지 제목 -->
         <header class="masthead">
             <div class="masthead__meta mono">
-                <span>bsi · to do list</span>
+                <span>tdl · things to do</span>
                 <span id="today"></span>
             </div>
             <h1 class="masthead__title">Things<br>to do <em class="serif">today</em></h1>

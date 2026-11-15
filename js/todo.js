@@ -4,10 +4,10 @@
  * + 중요한 할일 핀 고정(최대 3개), 빈 목록 응원 문구
  */
 const STORAGE_KEYS = {
-    items: "bsi-todos",
-    trash: "bsi-todos-trash",
-    sortBy: "bsi-todos-sort",
-    filter: "bsi-todos-filter",
+    items: "tdl-todos",
+    trash: "tdl-todos-trash",
+    sortBy: "tdl-todos-sort",
+    filter: "tdl-todos-filter",
 };
 
 // 정렬 기준별 비교 함수 (날짜가 같으면 등록순)
