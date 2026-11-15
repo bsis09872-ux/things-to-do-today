@@ -14,6 +14,18 @@ const SORTERS = {
     date: (a, b) => a.date.localeCompare(b.date) || a.uid - b.uid,
 };
 
+// HTML 특수문자 -> 문자 그대로 보이도록 바꿀 값
+const HTML_ENTITIES = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+};
+
+// 사용자 입력을 화면에 넣기 전에 특수문자 치환 (태그 실행 방지)
+const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => HTML_ENTITIES[ch]);
+
 const todo = {
     items: [],        // 할일 목록 [{ uid, date, title, content, done }]
     trash: [],        // 휴지통 목록
@@ -125,10 +137,12 @@ const todo = {
     },
 
     // 할일 객체 -> 템플릿의 ${key} 자리에 값을 채운 HTML 문자열
+    // - 정규식으로 템플릿을 한 번만 훑으면서 치환 (넣은 값이 다시 치환되지 않음)
+    // - 치환 값은 함수로 돌려줘서 $&, $' 같은 특수 패턴이 해석되지 않음
+    // - 사용자 입력은 escapeHtml로 바꿔 넣어 태그로 실행되지 않음
     toHtml(item, tplId) {
-        return Object.entries(item).reduce(
-            (html, [key, value]) => html.replaceAll(`\${${key}}`, value),
-            this.getTpl(tplId)
+        return this.getTpl(tplId).replace(/\$\{(\w+)\}/g, (placeholder, key) =>
+            key in item ? escapeHtml(item[key]) : placeholder
         );
     },
 
