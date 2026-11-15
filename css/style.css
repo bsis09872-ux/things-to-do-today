@@ -117,6 +117,11 @@ button {
     outline-offset: 2px;
 }
 
+/* hidden 속성은 display를 지정한 클래스(.btn 등)보다 우선 */
+[hidden] {
+    display: none !important;
+}
+
 /* 공통 유틸 */
 .mono {
     font-family: var(--font-mono);
@@ -239,6 +244,20 @@ textarea.field__input {
 .todo-form__actions {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+/* 수정 모드 안내 문구 */
+.edit-hint {
+    margin-right: auto;
+    color: var(--tomato);
+}
+
+/* 수정 중인 카드 표시 */
+.todo-card.is-editing {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
 }
 
 /* 5-3. 버튼 */

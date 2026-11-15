@@ -208,6 +208,16 @@ const todo = {
         });
 
         this.renderStats();
+        this.markEditing();
+    },
+
+    // 수정 중인 카드 표시 (목록을 다시 그려도 표시가 유지되도록 render 끝에서도 호출)
+    markEditing() {
+        document.querySelectorAll(".todo-card.is-editing")
+            .forEach(el => el.classList.remove("is-editing"));
+        if (this.editingUid !== null) {
+            document.getElementById(`item-${this.editingUid}`)?.classList.add("is-editing");
+        }
     },
 
     // 개수만 갱신 (완료 체크처럼 목록을 다시 그리지 않을 때도 사용)
@@ -222,6 +232,8 @@ const todo = {
 window.addEventListener("DOMContentLoaded", () => {
     const form = document.forms.frmTodo;
     const submitBtn = form.querySelector("button[type='submit']");
+    const cancelBtn = form.querySelector(".cancel-edit");
+    const editHint = form.querySelector(".edit-hint");
     const trashModal = document.getElementById("trash-modal");
 
     // 입력 항목(name)과 비어 있을 때 보여줄 메시지
@@ -231,11 +243,29 @@ window.addEventListener("DOMContentLoaded", () => {
         detail: "내용을 입력하세요.",
     };
 
+    // 수정 모드 켜기/끄기: 버튼 문구·취소 버튼·안내 문구·수정 중인 카드 표시를 한 곳에서 처리
+    const setEditMode = (uid) => {
+        todo.editingUid = uid;
+        const editing = uid !== null;
+        form.dataset.mode = editing ? "edit" : "add";
+        submitBtn.textContent = editing ? "수정하기" : "등록하기";
+        cancelBtn.hidden = !editing;
+        editHint.hidden = !editing;
+        todo.markEditing();
+    };
+
     // 양식 초기화 + 등록 모드로 되돌리기
     const resetForm = () => {
         form.reset();
-        todo.editingUid = null;
-        submitBtn.textContent = "등록하기";
+        setEditMode(null);
+    };
+
+    // 수정 취소: 폼을 비우고, 수정하던 카드의 '수정' 버튼으로 포커스를 돌려줌
+    const cancelEdit = () => {
+        const uid = todo.editingUid;
+        if (uid === null) return;
+        resetForm();
+        document.querySelector(`#item-${uid} .edit-action`)?.focus();
     };
 
     // 등록 / 수정 처리
@@ -293,10 +323,16 @@ window.addEventListener("DOMContentLoaded", () => {
             form.date.value = item.date;
             form.task.value = item.title;
             form.detail.value = item.content;
-            todo.editingUid = uid;
-            submitBtn.textContent = "수정하기";
-            form.task.focus();
+            setEditMode(uid);
+            form.scrollIntoView({ behavior: "smooth", block: "start" });
+            form.task.focus({ preventScroll: true });
         }
+    });
+
+    // 수정 취소: 취소 버튼 클릭 또는 Esc 키 (휴지통 모달이 열려 있을 땐 모달 닫기가 우선)
+    cancelBtn.addEventListener("click", cancelEdit);
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !trashModal.open) cancelEdit();
     });
 
     // 정렬 버튼
