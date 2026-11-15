@@ -148,7 +148,7 @@ button {
 
 /* ---------- 4. 레이아웃 ---------- */
 .page {
-    max-width: 980px;
+    max-width: 1180px;
     min-height: 100vh;
     margin: 0 auto;
     padding: var(--space-6) var(--space-5);
@@ -157,11 +157,20 @@ button {
     gap: var(--space-6);
 }
 
-.page > main {
+/* 본문 2단 : 왼쪽(등록 폼 + 목록) / 오른쪽(핀 상자) */
+.layout {
     flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    align-items: start;
+    gap: var(--space-6);
+}
+
+.layout__main {
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
+    min-width: 0;
 }
 
 /* ---------- 5. 컴포넌트 ---------- */
@@ -468,6 +477,44 @@ textarea.field__input {
     color: var(--card-accent);
 }
 
+.todo-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* 카드의 핀 버튼 : 고정 전에는 흐리게, 고정하면 진하게 + 비스듬히 꽂힌 모양 */
+.pin {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: var(--card-fg);
+    opacity: .35;
+    transition: opacity .2s var(--ease), transform .25s var(--ease), background-color .2s var(--ease);
+}
+
+.pin:hover {
+    opacity: .8;
+    background: rgba(255, 255, 255, .2);
+}
+
+.pin[aria-pressed="true"] {
+    opacity: 1;
+    transform: rotate(-35deg);
+}
+
+/* 핀 상자에서 이동했을 때 카드 강조 */
+.todo-card.is-flash {
+    animation: card-flash 1.2s var(--ease);
+}
+
+@keyframes card-flash {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(30, 58, 110, 0); }
+    25%, 60% { box-shadow: 0 0 0 6px rgba(30, 58, 110, .35); }
+}
+
 .todo-card__title {
     margin-top: var(--space-2);
     font-size: 1.375rem;
@@ -530,7 +577,7 @@ textarea.field__input {
     background-size: 0% 2px;
 }
 
-/* 목록이 비었을 때 */
+/* 목록이 비었을 때 : 안내 문구 + 랜덤 응원 문구 */
 .empty {
     grid-column: 1 / -1;
     padding: var(--space-6) var(--space-4);
@@ -542,7 +589,125 @@ textarea.field__input {
     font-size: 0.8125rem;
 }
 
-/* 5-6. 휴지통 모달 */
+.empty__cheer {
+    margin-top: var(--space-3);
+    font-family: var(--font-sans);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+/* 5-6. 핀 상자 (넓은 화면 : 오른쪽에 붙어서 스크롤을 따라다님) */
+.pin-board {
+    position: sticky;
+    top: var(--space-5);
+    padding: var(--space-4);
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--paper);
+}
+
+.pin-board__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-3);
+    border-bottom: 1px solid var(--ink);
+}
+
+.pin-board__title {
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--tomato);
+}
+
+.pin-list {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.pin-board__empty {
+    color: var(--ink-soft);
+    font-size: 0.8125rem;
+}
+
+.pin-board__notice:empty {
+    display: none;
+}
+
+.pin-board__notice {
+    margin-top: var(--space-3);
+    color: var(--tomato);
+    font-size: 0.75rem;
+}
+
+.pin-board.is-shake {
+    animation: board-shake .4s var(--ease);
+}
+
+@keyframes board-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.pin-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    border-radius: 8px;
+    background: var(--lemon);
+    transition: background-color .2s var(--ease);
+}
+
+.pin-item:hover {
+    background: #EBCF73;
+}
+
+.pin-item__jump {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+}
+
+.pin-item__date {
+    font-size: 0.6875rem;
+    color: var(--tomato-deep);
+}
+
+.pin-item__title {
+    font-weight: 600;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.pin-item .icon-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+}
+
+.pin-item .icon-btn:hover {
+    background: rgba(255, 255, 255, .5);
+}
+
+/* 완료한 핀 항목 : 바래고 빨간 취소선 */
+.pin-item[data-done="true"] {
+    background: var(--paper-2);
+    color: var(--ink-soft);
+}
+
+.pin-item[data-done="true"] .pin-item__title {
+    text-decoration: line-through 3px var(--tomato);
+}
+
+/* 5-7. 휴지통 모달 */
 .modal {
     width: min(92vw, 520px);
     max-height: 80vh;
@@ -608,7 +773,7 @@ textarea.field__input {
     gap: var(--space-2);
 }
 
-/* 5-7. 푸터 */
+/* 5-8. 푸터 */
 .colophon {
     padding-top: var(--space-5);
     border-top: 1px solid var(--ink);
@@ -665,10 +830,61 @@ textarea.field__input {
 }
 
 /* ---------- 7. 반응형 ---------- */
+/* 태블릿 이하 : 1단으로 바꾸고, 핀 상자는 화면 위쪽에 붙어 따라다니는 가로 띠로 */
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pin-board {
+        order: -1;
+        top: 0;
+        z-index: 5;
+        padding: var(--space-3);
+        border-width: 0 0 1px;
+        border-radius: 0;
+        margin: 0 calc(var(--space-5) * -1);
+    }
+
+    .pin-board[data-empty="true"] {
+        display: none;
+    }
+
+    .pin-board__head {
+        padding-bottom: var(--space-2);
+        margin-bottom: var(--space-2);
+        border-bottom: 0;
+    }
+
+    .pin-board__title {
+        font-size: 1.125rem;
+    }
+
+    .pin-list {
+        display: flex;
+        gap: var(--space-2);
+        overflow-x: auto;
+        scrollbar-width: none; /* 가로 스크롤은 되지만 스크롤바 선은 숨김 */
+    }
+
+    .pin-list::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pin-item {
+        flex: 0 0 auto;
+        max-width: 70%;
+    }
+}
+
 @media (max-width: 640px) {
     .page {
         padding: var(--space-5) var(--space-4);
         gap: var(--space-5);
+    }
+
+    .pin-board {
+        margin: 0 calc(var(--space-4) * -1);
     }
 
     .field {

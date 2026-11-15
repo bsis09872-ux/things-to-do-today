@@ -1,6 +1,7 @@
 /**
  * Tdl (Things to do today) - 할일 등록 / 조회 / 수정 / 삭제
  * + 등록순·날짜순 정렬, 휴지통(복구·영구삭제), 완료 표시, 전체/진행중/완료 필터
+ * + 중요한 할일 핀 고정(최대 3개), 빈 목록 응원 문구
  */
 const STORAGE_KEYS = {
     items: "bsi-todos",
@@ -17,10 +18,29 @@ const SORTERS = {
 
 // 보기 필터별 조건 함수와 목록이 비었을 때 문구
 const FILTERS = {
-    all: { test: () => true, empty: "등록된 할 일이 없습니다." },
-    active: { test: item => !item.done, empty: "진행 중인 할 일이 없습니다." },
-    done: { test: item => item.done, empty: "완료한 할 일이 없습니다." },
+    all: { test: () => true, empty: "등록된 할 일이 없어요" },
+    active: { test: item => !item.done, empty: "진행 중인 할 일이 없어요" },
+    done: { test: item => item.done, empty: "아직 완료한 할 일이 없어요" },
 };
+
+// 목록이 비었을 때 랜덤으로 보여줄 응원 문구
+const CHEERS = [
+    "🌱 오늘의 작은 한 걸음이 내일을 바꿔요.",
+    "☕ 잠깐 숨 고르고, 천천히 시작해 볼까요?",
+    "🍋 상큼하게, 다음 할 일도 가볍게!",
+    "💪 할 수 있어요. 이미 잘하고 있어요.",
+    "🌊 흐름을 타면 금방이에요.",
+    "🍅 하나씩 해내는 게 바로 실력이에요.",
+    "✨ 완벽보다 꾸준함이 이겨요.",
+    "🎯 오늘 딱 하나만 끝내도 충분해요.",
+    "🚀 시작이 반! 나머지 반도 금방이에요.",
+    "🌈 비어 있는 칸은 새로운 가능성이에요.",
+];
+
+const pickCheer = () => CHEERS[Math.floor(Math.random() * CHEERS.length)];
+
+// 핀 고정 최대 개수
+const PIN_LIMIT = 3;
 
 // HTML 특수문자 -> 문자 그대로 보이도록 바꿀 값
 const HTML_ENTITIES = {
@@ -35,7 +55,7 @@ const HTML_ENTITIES = {
 const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => HTML_ENTITIES[ch]);
 
 const todo = {
-    items: [],        // 할일 목록 [{ uid, date, title, content, done }]
+    items: [],        // 할일 목록 [{ uid, date, title, content, done, pinnedAt }]
     trash: [],        // 휴지통 목록
     sortBy: "regist", // 정렬 기준: regist(등록순) | date(날짜순)
     filter: "all",    // 보기 필터: all(전체) | active(진행중) | done(완료)
@@ -49,8 +69,30 @@ const todo = {
 
     // 할일 등록
     add(date, title, content) {
-        this.items = [...this.items, { uid: Date.now(), date, title, content, done: false }];
+        this.items = [...this.items, { uid: Date.now(), date, title, content, done: false, pinnedAt: null }];
         this.commit();
+    },
+
+    // 핀 고정된 할일 (고정한 순서대로)
+    pinned() {
+        return this.items
+            .filter(item => item.pinnedAt != null)
+            .sort((a, b) => a.pinnedAt - b.pinnedAt);
+    },
+
+    // 핀 고정 / 해제 토글. 최대 개수를 넘으면 고정하지 않고 false 반환
+    togglePin(uid) {
+        const target = this.get(uid);
+        if (!target) return false;
+
+        const pinning = target.pinnedAt == null;
+        if (pinning && this.pinned().length >= PIN_LIMIT) return false;
+
+        this.items = this.items.map(item =>
+            item.uid === uid ? { ...item, pinnedAt: pinning ? Date.now() : null } : item
+        );
+        this.commit();
+        return true;
     },
 
     // 완료 표시 토글: 목록 전체를 다시 그리지 않고 저장만 한 뒤 바뀐 상태를 돌려줌
@@ -84,8 +126,12 @@ const todo = {
     restore(uid) {
         const target = this.trash.find(item => item.uid === uid);
         if (!target) return;
+
+        // 고정돼 있던 할일은 자리가 남아 있을 때만 다시 고정
+        const keepPin = target.pinnedAt != null && this.pinned().length < PIN_LIMIT;
+
         this.trash = this.trash.filter(item => item.uid !== uid);
-        this.items = [...this.items, target];
+        this.items = [...this.items, { ...target, pinnedAt: keepPin ? target.pinnedAt : null }];
         this.commit();
     },
 
@@ -180,22 +226,37 @@ const todo = {
         );
     },
 
-    // 목록 HTML (비어 있으면 안내 문구)
-    listHtml(items, tplId, emptyText) {
+    // 목록 HTML (비어 있으면 emptyHtml 출력)
+    listHtml(items, tplId, emptyHtml) {
         return items.length
             ? items.map(item => this.toHtml(item, tplId)).join("")
-            : `<li class="empty">${emptyText}</li>`;
+            : emptyHtml;
+    },
+
+    // 화면 출력용 값: 예전에 저장된 항목(done·pinnedAt 없음)도 기본값으로 맞춤
+    toView(item) {
+        return { ...item, done: Boolean(item.done), pinned: item.pinnedAt != null };
     },
 
     // 화면 갱신
     render() {
-        // 예전에 저장된 항목(done 없음)도 false로 맞춰서 출력
-        const viewItems = this.visible().map(item => ({ ...item, done: Boolean(item.done) }));
-        document.getElementById("todo-items").innerHTML =
-            this.listHtml(viewItems, "tpl", FILTERS[this.filter].empty);
+        const viewItems = this.visible().map(item => this.toView(item));
+        document.getElementById("todo-items").innerHTML = this.listHtml(
+            viewItems,
+            "tpl",
+            `<li class="empty">
+                <p class="empty__label">${FILTERS[this.filter].empty}</p>
+                <p class="empty__cheer">${pickCheer()}</p>
+            </li>`
+        );
 
-        document.getElementById("trash-items").innerHTML =
-            this.listHtml(this.trash, "tpl-trash", "휴지통이 비어 있습니다.");
+        document.getElementById("trash-items").innerHTML = this.listHtml(
+            this.trash,
+            "tpl-trash",
+            `<li class="empty">휴지통이 비어 있습니다.</li>`
+        );
+
+        this.renderPins();
 
         document.getElementById("trash-count").textContent = this.trash.length;
 
@@ -218,6 +279,18 @@ const todo = {
         if (this.editingUid !== null) {
             document.getElementById(`item-${this.editingUid}`)?.classList.add("is-editing");
         }
+    },
+
+    // 핀 상자 갱신
+    renderPins() {
+        const pins = this.pinned().map(item => this.toView(item));
+        document.getElementById("pin-items").innerHTML = this.listHtml(
+            pins,
+            "tpl-pin",
+            `<li class="pin-board__empty">카드의 <i class="fa-solid fa-thumbtack" aria-hidden="true"></i> 를 눌러 중요한 할 일을 고정해 보세요.</li>`
+        );
+        document.getElementById("pin-count").textContent = `${pins.length}/${PIN_LIMIT}`;
+        document.querySelector(".pin-board").dataset.empty = pins.length === 0;
     },
 
     // 개수만 갱신 (완료 체크처럼 목록을 다시 그리지 않을 때도 사용)
@@ -299,14 +372,22 @@ window.addEventListener("DOMContentLoaded", () => {
         if (btn.classList.contains("toggle-action")) {
             const done = todo.toggle(uid);
 
-            // '전체' 보기에서는 카드 1개만 바꾸고(fade 효과 유지) 개수만 갱신,
+            // '전체' 보기에서는 카드 1개만 바꾸고(fade 효과 유지) 개수·핀 상자만 갱신,
             // '진행중'·'완료' 보기에서는 카드가 목록에서 빠져야 하므로 다시 그림
             if (todo.filter === "all") {
                 btn.closest(".todo-card").dataset.done = done;
                 btn.setAttribute("aria-pressed", done);
                 todo.renderStats();
+                todo.renderPins();
             } else {
                 todo.render();
+            }
+            return;
+        }
+
+        if (btn.classList.contains("pin-action")) {
+            if (!todo.togglePin(uid)) {
+                showPinNotice(`📌 핀은 최대 ${PIN_LIMIT}개까지 고정할 수 있어요.`);
             }
             return;
         }
@@ -327,6 +408,41 @@ window.addEventListener("DOMContentLoaded", () => {
             form.scrollIntoView({ behavior: "smooth", block: "start" });
             form.task.focus({ preventScroll: true });
         }
+    });
+
+    // 핀 상자 안내 문구 (잠깐 보였다가 사라짐)
+    const pinBoard = document.querySelector(".pin-board");
+    const pinNotice = document.getElementById("pin-notice");
+    let pinNoticeTimer = null;
+    const showPinNotice = (message) => {
+        pinNotice.textContent = message;
+        pinBoard.classList.remove("is-shake");
+        void pinBoard.offsetWidth; // 애니메이션을 처음부터 다시 재생하기 위한 리플로우
+        pinBoard.classList.add("is-shake");
+        clearTimeout(pinNoticeTimer);
+        pinNoticeTimer = setTimeout(() => { pinNotice.textContent = ""; }, 2500);
+    };
+
+    // 핀 상자에서 항목을 누르면 목록의 해당 카드로 이동 후 잠깐 강조
+    const jumpToCard = (uid) => {
+        if (!todo.visible().some(item => item.uid === uid)) todo.setFilter("all");
+        const card = document.getElementById(`item-${uid}`);
+        if (!card) return;
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.classList.remove("is-flash");
+        void card.offsetWidth;
+        card.classList.add("is-flash");
+        card.querySelector(".edit-action")?.focus({ preventScroll: true });
+    };
+
+    // 핀 상자 버튼 (이동 / 고정 해제): 상자(ul)에 리스너 1개 (이벤트 위임)
+    document.getElementById("pin-items").addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-uid]");
+        if (!btn) return;
+
+        const uid = Number(btn.dataset.uid);
+        if (btn.classList.contains("jump-action")) jumpToCard(uid);
+        if (btn.classList.contains("unpin-action")) todo.togglePin(uid);
     });
 
     // 수정 취소: 취소 버튼 클릭 또는 Esc 키 (휴지통 모달이 열려 있을 땐 모달 닫기가 우선)

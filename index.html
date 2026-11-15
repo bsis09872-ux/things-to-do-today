@@ -29,60 +29,72 @@
             <h1 class="masthead__title">Things<br>to do <em class="serif">today</em></h1>
         </header>
 
-        <main>
-            <!-- 메인파트1 : 할일 내용 기입하고 등록하기 -->
-            <section class="panel" aria-labelledby="form-title">
-                <h2 id="form-title" class="sr-only">할 일 등록</h2>
-                <form name="frmTodo" method="post" autocomplete="off" class="todo-form">
-                    <label class="field">
-                        <span class="field__label mono">date</span>
-                        <input class="field__input" type="date" name="date">
-                    </label>
-                    <label class="field">
-                        <span class="field__label mono">title</span>
-                        <input class="field__input" type="text" name="task" placeholder="할 일의 제목을 지어주세요.">
-                    </label>
-                    <label class="field">
-                        <span class="field__label mono">memo</span>
-                        <textarea class="field__input" name="detail" rows="2" placeholder="할 일이 무엇인가요?"></textarea>
-                    </label>
-                    <div class="todo-form__actions">
-                        <p class="edit-hint mono" hidden>수정 중 · Esc 키로 취소</p>
-                        <button type="button" class="btn btn--ghost cancel-edit" hidden>취소</button>
-                        <button type="submit" class="btn btn--primary">등록하기</button>
-                    </div>
-                </form>
-            </section>
-
-            <!-- 메인파트2 : 정렬 / 휴지통 + 등록된 할일 목록 -->
-            <section aria-labelledby="list-title">
-                <div class="toolbar">
-                    <div>
-                        <h2 id="list-title" class="toolbar__title serif">my list</h2>
-                        <p class="summary mono" aria-live="polite">남은 할 일 <strong data-count="active">0</strong>개</p>
-                    </div>
-                    <div class="toolbar__tools">
-                        <div class="sort-wrap mono" role="group" aria-label="정렬 기준">
-                            <button type="button" class="sort-action" data-sort="regist" aria-pressed="true">등록순</button>
-                            <span aria-hidden="true">/</span>
-                            <button type="button" class="sort-action" data-sort="date" aria-pressed="false">날짜순</button>
+        <main class="layout">
+            <div class="layout__main">
+                <!-- 메인파트1 : 할일 내용 기입하고 등록하기 -->
+                <section class="panel" aria-labelledby="form-title">
+                    <h2 id="form-title" class="sr-only">할 일 등록</h2>
+                    <form name="frmTodo" method="post" autocomplete="off" class="todo-form">
+                        <label class="field">
+                            <span class="field__label mono">date</span>
+                            <input class="field__input" type="date" name="date">
+                        </label>
+                        <label class="field">
+                            <span class="field__label mono">title</span>
+                            <input class="field__input" type="text" name="task" placeholder="할 일의 제목을 지어주세요.">
+                        </label>
+                        <label class="field">
+                            <span class="field__label mono">memo</span>
+                            <textarea class="field__input" name="detail" rows="2" placeholder="할 일이 무엇인가요?"></textarea>
+                        </label>
+                        <div class="todo-form__actions">
+                            <p class="edit-hint mono" hidden>수정 중 · Esc 키로 취소</p>
+                            <button type="button" class="btn btn--ghost cancel-edit" hidden>취소</button>
+                            <button type="submit" class="btn btn--primary">등록하기</button>
                         </div>
-                        <button type="button" id="open-trash" class="btn btn--ghost" aria-haspopup="dialog">
-                            <i class="fa-solid fa-trash-can" aria-hidden="true"></i> 휴지통 <span id="trash-count" class="count">0</span>
-                        </button>
+                    </form>
+                </section>
+
+                <!-- 메인파트2 : 정렬 / 휴지통 + 등록된 할일 목록 -->
+                <section aria-labelledby="list-title">
+                    <div class="toolbar">
+                        <div>
+                            <h2 id="list-title" class="toolbar__title serif">my list</h2>
+                            <p class="summary mono" aria-live="polite">남은 할 일 <strong data-count="active">0</strong>개</p>
+                        </div>
+                        <div class="toolbar__tools">
+                            <div class="sort-wrap mono" role="group" aria-label="정렬 기준">
+                                <button type="button" class="sort-action" data-sort="regist" aria-pressed="true">등록순</button>
+                                <span aria-hidden="true">/</span>
+                                <button type="button" class="sort-action" data-sort="date" aria-pressed="false">날짜순</button>
+                            </div>
+                            <button type="button" id="open-trash" class="btn btn--ghost" aria-haspopup="dialog">
+                                <i class="fa-solid fa-trash-can" aria-hidden="true"></i> 휴지통 <span id="trash-count" class="count">0</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- 보기 필터 (괄호 안 숫자는 js/todo.js에서 집계) -->
-                <div class="filter-wrap" role="group" aria-label="보기 필터">
-                    <button type="button" class="filter-action" data-filter="all" aria-pressed="true">전체 <span data-count="all">0</span></button>
-                    <button type="button" class="filter-action" data-filter="active" aria-pressed="false">진행중 <span data-count="active">0</span></button>
-                    <button type="button" class="filter-action" data-filter="done" aria-pressed="false">완료 <span data-count="done">0</span></button>
-                </div>
+                    <!-- 보기 필터 (괄호 안 숫자는 js/todo.js에서 집계) -->
+                    <div class="filter-wrap" role="group" aria-label="보기 필터">
+                        <button type="button" class="filter-action" data-filter="all" aria-pressed="true">전체 <span data-count="all">0</span></button>
+                        <button type="button" class="filter-action" data-filter="active" aria-pressed="false">진행중 <span data-count="active">0</span></button>
+                        <button type="button" class="filter-action" data-filter="done" aria-pressed="false">완료 <span data-count="done">0</span></button>
+                    </div>
 
-                <!-- js/todo.js에서 렌더링 -->
-                <ul id="todo-items" class="todo-grid"></ul>
-            </section>
+                    <!-- js/todo.js에서 렌더링 -->
+                    <ul id="todo-items" class="todo-grid"></ul>
+                </section>
+            </div>
+
+            <!-- 핀 상자 : 고정한 중요한 할일 (넓은 화면에서는 오른쪽에 따라다님) -->
+            <aside class="pin-board" aria-labelledby="pin-title">
+                <div class="pin-board__head">
+                    <h2 id="pin-title" class="pin-board__title serif">pinned</h2>
+                    <span id="pin-count" class="mono">0/3</span>
+                </div>
+                <ul id="pin-items" class="pin-list"></ul>
+                <p id="pin-notice" class="pin-board__notice mono" aria-live="polite"></p>
+            </aside>
 
             <!-- 휴지통 모달 -->
             <dialog id="trash-modal" class="modal" aria-labelledby="trash-title">
@@ -97,12 +109,17 @@
 
             <!-- 할일 카드 템플릿 -->
             <script type="text/html" id="tpl">
-                <li id="item-${uid}" class="todo-card" data-done="${done}">
+                <li id="item-${uid}" class="todo-card" data-done="${done}" data-pinned="${pinned}">
                     <div class="todo-card__head">
                         <button type="button" class="check toggle-action" data-uid="${uid}" aria-pressed="${done}" aria-label="완료 표시">
                             <i class="fa-solid fa-check" aria-hidden="true"></i>
                         </button>
-                        <time class="todo-card__date mono" datetime="${date}">${date}</time>
+                        <div class="todo-card__meta">
+                            <time class="todo-card__date mono" datetime="${date}">${date}</time>
+                            <button type="button" class="pin pin-action" data-uid="${uid}" aria-pressed="${pinned}" aria-label="핀 고정">
+                                <i class="fa-solid fa-thumbtack" aria-hidden="true"></i>
+                            </button>
+                        </div>
                     </div>
                     <h3 class="todo-card__title"><span class="strike">${title}</span></h3>
                     <p class="todo-card__content"><span class="strike strike--thin">${content}</span></p>
@@ -125,6 +142,19 @@
                         <button type="button" class="chip restore-action" data-uid="${uid}">복구</button>
                         <button type="button" class="chip chip--danger destroy-action" data-uid="${uid}">영구삭제</button>
                     </div>
+                </li>
+            </script>
+
+            <!-- 핀 상자 항목 템플릿 -->
+            <script type="text/html" id="tpl-pin">
+                <li class="pin-item" data-done="${done}">
+                    <button type="button" class="pin-item__jump jump-action" data-uid="${uid}">
+                        <span class="pin-item__date mono">${date}</span>
+                        <span class="pin-item__title">${title}</span>
+                    </button>
+                    <button type="button" class="icon-btn unpin-action" data-uid="${uid}" aria-label="고정 해제">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
                 </li>
             </script>
         </main>
