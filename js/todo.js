@@ -1,6 +1,8 @@
 /**
  * Tdl (Things to do today) - 할일 등록 / 조회 / 수정 / 삭제
  */
+const STORAGE_KEY = "bsi-todos";
+
 const todo = {
     items: [],        // 할일 목록 [{ uid, date, title, content }]
     tpl: null,        // 항목 템플릿 (최초 1회만 읽어서 재사용)
@@ -14,7 +16,7 @@ const todo = {
     // 할일 등록
     add(date, title, content) {
         this.items = [...this.items, { uid: Date.now(), date, title, content }];
-        this.render();
+        this.commit();
     },
 
     // 할일 수정: uid가 같은 항목만 새 값으로 교체
@@ -22,17 +24,34 @@ const todo = {
         this.items = this.items.map(item =>
             item.uid === uid ? { ...item, date, title, content } : item
         );
-        this.render();
+        this.commit();
     },
 
     // 할일 삭제: uid가 다른 항목만 남김
     remove(uid) {
         this.items = this.items.filter(item => item.uid !== uid);
+        this.commit();
+    },
+
+    // 변경 사항 저장 후 화면 갱신
+    commit() {
+        this.save();
         this.render();
     },
 
+    // 할일 저장 (localStorage)
     save() {
-        // 할일 저장 (localStorage 연동 예정)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items));
+    },
+
+    // 저장된 할일 불러오기 (저장값이 없거나 깨져 있으면 빈 목록)
+    load() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            this.items = Array.isArray(saved) ? saved : [];
+        } catch {
+            this.items = [];
+        }
     },
 
     // 템플릿 조회
@@ -125,5 +144,6 @@ window.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    todo.load();
     todo.render();
 });

@@ -1,4 +1,29 @@
-/* font: pretendard */
+/* font: pretendard (font/pretendard/*.woff2) */
+@font-face {
+    font-family: 'Pretendard';
+    font-weight: 200;
+    font-display: swap;
+    src: url('../font/pretendard/pretendard-latin-200-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Pretendard';
+    font-weight: 400;
+    font-display: swap;
+    src: url('../font/pretendard/pretendard-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Pretendard';
+    font-weight: 600;
+    font-display: swap;
+    src: url('../font/pretendard/pretendard-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Pretendard';
+    font-weight: 700;
+    font-display: swap;
+    src: url('../font/pretendard/pretendard-latin-700-normal.woff2') format('woff2');
+}
+
 body {
 font-family: 'Pretendard', sans-serif;
 font-weight: 400;

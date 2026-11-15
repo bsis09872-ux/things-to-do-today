@@ -10,8 +10,6 @@
     <link rel="stylesheet" type="text/css" href="css/style.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <!-- Font file : pretendard -->
-    <link rel="stylesheet" href="font/pretendard">
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- java script -->
@@ -42,26 +40,8 @@
             <button type="submit" class="bg-taupe-500 hover:bg-taupe-700 text-white font-bold py-2 px-4 rounded-lg block mx-auto cursor-pointer w-64">등록하기</button>
         </form>
 
-        <ul id="todo-items" class="m-4 p-4 grid md:grid-cols-2 gap-4">
-        <!-- 발표용 임의 배치 -->
-            <li id="item-${uid}" class="border border-grey-300 rounded-lg group p-4">
-                <div class="group-hover:shadow-md">날짜</div>
-                <div class="">내용</div>
-                <div class="flex justify-between">
-                    <button type="button" class="delete-action grow py-2 bg-taupe-500 hover:bg-taupe-700 text-white cursor-pointer" data-uid="${uid}">삭제</button>
-                    <button type="button" class="edit-action grow py-2 bg-taupe-500 hover:bg-taupe-700 text-white cursor-pointer" data-uid="${uid}">수정</button>
-                </div>
-            </li>
-            <li id="item-${uid}" class="border border-grey-300 rounded-lg group p-4">
-                <div class="group-hover:shadow-md">날짜</div>
-                <div class="">내용</div>
-                <div class="flex justify-between">
-                    <button type="button" class="delete-action grow py-2 bg-taupe-500 hover:bg-taupe-700 text-white cursor-pointer" data-uid="${uid}">삭제</button>
-                    <button type="button" class="edit-action grow py-2 bg-taupe-500 hover:bg-taupe-700 text-white cursor-pointer" data-uid="${uid}">수정</button>
-                </div>
-            </li>
-
-        </ul>    
+        <!-- 메인파트2 : 등록된 할일 목록 (js/todo.js에서 렌더링) -->
+        <ul id="todo-items" class="m-4 p-4 grid md:grid-cols-2 gap-4"></ul>
 
         <script type="text/html" id="tpl">
             <li id="item-${uid}" class="border border-grey-300 rounded-lg group p-4">
