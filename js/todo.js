@@ -1,6 +1,6 @@
 /**
  * Tdl (Things to do today) - 할일 등록 / 조회 / 수정 / 삭제
- * + 등록순·날짜순 정렬, 휴지통(복구·영구삭제)
+ * + 등록순·날짜순 정렬, 휴지통(복구·영구삭제), 완료 표시
  */
 const STORAGE_KEYS = {
     items: "bsi-todos",
@@ -15,7 +15,7 @@ const SORTERS = {
 };
 
 const todo = {
-    items: [],        // 할일 목록 [{ uid, date, title, content }]
+    items: [],        // 할일 목록 [{ uid, date, title, content, done }]
     trash: [],        // 휴지통 목록
     sortBy: "regist", // 정렬 기준: regist(등록순) | date(날짜순)
     tpls: {},         // 템플릿 캐시 (id별로 최초 1회만 읽어서 재사용)
@@ -28,8 +28,18 @@ const todo = {
 
     // 할일 등록
     add(date, title, content) {
-        this.items = [...this.items, { uid: Date.now(), date, title, content }];
+        this.items = [...this.items, { uid: Date.now(), date, title, content, done: false }];
         this.commit();
+    },
+
+    // 완료 표시 토글: 목록 전체를 다시 그리지 않고 저장만 한 뒤 바뀐 상태를 돌려줌
+    // (카드 1개만 화면에서 바꾸면 되므로 fade 전환 효과도 자연스럽게 보임)
+    toggle(uid) {
+        this.items = this.items.map(item =>
+            item.uid === uid ? { ...item, done: !item.done } : item
+        );
+        this.save();
+        return Boolean(this.get(uid)?.done);
     },
 
     // 할일 수정: uid가 같은 항목만 새 값으로 교체
@@ -131,8 +141,10 @@ const todo = {
 
     // 화면 갱신
     render() {
+        // 예전에 저장된 항목(done 없음)도 false로 맞춰서 출력
+        const viewItems = this.sorted().map(item => ({ ...item, done: Boolean(item.done) }));
         document.getElementById("todo-items").innerHTML =
-            this.listHtml(this.sorted(), "tpl", "등록된 할 일이 없습니다.");
+            this.listHtml(viewItems, "tpl", "등록된 할 일이 없습니다.");
 
         document.getElementById("trash-items").innerHTML =
             this.listHtml(this.trash, "tpl-trash", "휴지통이 비어 있습니다.");
@@ -185,12 +197,19 @@ window.addEventListener("DOMContentLoaded", () => {
         resetForm();
     });
 
-    // 삭제 / 수정 버튼: 목록(ul)에 리스너 1개만 연결 (이벤트 위임)
+    // 완료 / 삭제 / 수정 버튼: 목록(ul)에 리스너 1개만 연결 (이벤트 위임)
     document.getElementById("todo-items").addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-uid]");
         if (!btn) return;
 
         const uid = Number(btn.dataset.uid);
+
+        if (btn.classList.contains("toggle-action")) {
+            const done = todo.toggle(uid);
+            btn.closest(".todo-card").dataset.done = done;
+            btn.setAttribute("aria-pressed", done);
+            return;
+        }
 
         if (btn.classList.contains("delete-action")) {
             todo.remove(uid); // 휴지통으로 이동하므로 확인 없이 처리
@@ -238,6 +257,13 @@ window.addEventListener("DOMContentLoaded", () => {
             if (confirm("영구 삭제하면 되돌릴 수 없습니다. 삭제할까요?")) todo.destroy(uid);
         }
     });
+
+    // 상단 오늘 날짜 (예: 2026.11.15 · sun)
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    document.getElementById("today").textContent =
+        `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} · ${days[now.getDay()]}`;
 
     todo.load();
     todo.render();
