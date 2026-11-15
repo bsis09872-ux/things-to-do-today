@@ -32,9 +32,9 @@
 
 ## 🎬 시연 영상
 
-<a href="./readme/demo/tdl-demo-2x.mp4">
-  <img src="./readme/images/demo-thumb.png" alt="시연 영상 썸네일 (클릭하면 재생)" width="720" />
-</a>
+
+https://github.com/user-attachments/assets/e8b99613-0e0c-4b17-a07a-2c924af13ed6
+
 
 > ▶️ 이미지를 누르면 시연 영상(2배속 · 2분 48초)이 열립니다. 일정 추가 → 조회 → 수정 → 삭제 → 핀 고정 → 새로고침 후 유지 순서입니다.
 
