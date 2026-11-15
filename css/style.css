@@ -348,6 +348,54 @@ textarea.field__input {
     text-underline-offset: 4px;
 }
 
+.summary {
+    margin-top: var(--space-2);
+    color: var(--ink-soft);
+}
+
+.summary strong {
+    color: var(--tomato);
+    font-weight: 500;
+}
+
+/* 보기 필터 (전체 / 진행중 / 완료) */
+.filter-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.filter-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    transition: background-color .2s var(--ease), color .2s var(--ease);
+}
+
+.filter-action span {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+}
+
+.filter-action:hover {
+    background: var(--paper-2);
+}
+
+.filter-action[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+}
+
+.filter-action[aria-pressed="true"] span {
+    color: var(--lemon);
+}
+
 /* 5-5. 할일 카드
    카드 색은 순서대로 tomato → pool → lemon 이 반복됩니다.
    각 카드는 --card-bg / --card-fg 두 변수만 바꾸고, 나머지 스타일은 공유합니다. */

@@ -55,7 +55,10 @@
             <!-- 메인파트2 : 정렬 / 휴지통 + 등록된 할일 목록 -->
             <section aria-labelledby="list-title">
                 <div class="toolbar">
-                    <h2 id="list-title" class="toolbar__title serif">my list</h2>
+                    <div>
+                        <h2 id="list-title" class="toolbar__title serif">my list</h2>
+                        <p class="summary mono" aria-live="polite">남은 할 일 <strong data-count="active">0</strong>개</p>
+                    </div>
                     <div class="toolbar__tools">
                         <div class="sort-wrap mono" role="group" aria-label="정렬 기준">
                             <button type="button" class="sort-action" data-sort="regist" aria-pressed="true">등록순</button>
@@ -66,6 +69,13 @@
                             <i class="fa-solid fa-trash-can" aria-hidden="true"></i> 휴지통 <span id="trash-count" class="count">0</span>
                         </button>
                     </div>
+                </div>
+
+                <!-- 보기 필터 (괄호 안 숫자는 js/todo.js에서 집계) -->
+                <div class="filter-wrap" role="group" aria-label="보기 필터">
+                    <button type="button" class="filter-action" data-filter="all" aria-pressed="true">전체 <span data-count="all">0</span></button>
+                    <button type="button" class="filter-action" data-filter="active" aria-pressed="false">진행중 <span data-count="active">0</span></button>
+                    <button type="button" class="filter-action" data-filter="done" aria-pressed="false">완료 <span data-count="done">0</span></button>
                 </div>
 
                 <!-- js/todo.js에서 렌더링 -->

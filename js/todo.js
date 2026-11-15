@@ -1,17 +1,25 @@
 /**
  * Tdl (Things to do today) - 할일 등록 / 조회 / 수정 / 삭제
- * + 등록순·날짜순 정렬, 휴지통(복구·영구삭제), 완료 표시
+ * + 등록순·날짜순 정렬, 휴지통(복구·영구삭제), 완료 표시, 전체/진행중/완료 필터
  */
 const STORAGE_KEYS = {
     items: "bsi-todos",
     trash: "bsi-todos-trash",
     sortBy: "bsi-todos-sort",
+    filter: "bsi-todos-filter",
 };
 
 // 정렬 기준별 비교 함수 (날짜가 같으면 등록순)
 const SORTERS = {
     regist: (a, b) => a.uid - b.uid,
     date: (a, b) => a.date.localeCompare(b.date) || a.uid - b.uid,
+};
+
+// 보기 필터별 조건 함수와 목록이 비었을 때 문구
+const FILTERS = {
+    all: { test: () => true, empty: "등록된 할 일이 없습니다." },
+    active: { test: item => !item.done, empty: "진행 중인 할 일이 없습니다." },
+    done: { test: item => item.done, empty: "완료한 할 일이 없습니다." },
 };
 
 // HTML 특수문자 -> 문자 그대로 보이도록 바꿀 값
@@ -30,7 +38,8 @@ const todo = {
     items: [],        // 할일 목록 [{ uid, date, title, content, done }]
     trash: [],        // 휴지통 목록
     sortBy: "regist", // 정렬 기준: regist(등록순) | date(날짜순)
-    tpls: {},         // 템플릿 캐시 (id별로 최초 1회만 읽어서 재사용)
+    filter: "all",    // 보기 필터: all(전체) | active(진행중) | done(완료)
+    tpls: {},       // 템플릿 캐시 (id별로 최초 1회만 읽어서 재사용)
     editingUid: null, // 수정 중인 할일의 uid (없으면 null)
 
     // 할일 1개 조회
@@ -93,9 +102,30 @@ const todo = {
         this.commit();
     },
 
-    // 정렬된 목록 (원본 배열은 그대로 두고 복사본을 정렬)
-    sorted() {
-        return [...this.items].sort(SORTERS[this.sortBy]);
+    // 보기 필터 변경
+    setFilter(filter) {
+        if (!FILTERS[filter]) return;
+        this.filter = filter;
+        this.commit();
+    },
+
+    // 화면에 보여줄 목록: 필터 조건에 맞는 항목만 골라서 정렬 (원본 배열은 그대로)
+    visible() {
+        return this.items
+            .filter(FILTERS[this.filter].test)
+            .sort(SORTERS[this.sortBy]);
+    },
+
+    // 개수 집계: 전체 / 진행중 / 완료를 한 번에 계산
+    stats() {
+        return this.items.reduce(
+            (acc, item) => {
+                acc.all += 1;
+                acc[item.done ? "done" : "active"] += 1;
+                return acc;
+            },
+            { all: 0, active: 0, done: 0 }
+        );
     },
 
     // 변경 사항 저장 후 화면 갱신
@@ -104,11 +134,12 @@ const todo = {
         this.render();
     },
 
-    // 할일·휴지통·정렬 기준 저장 (localStorage)
+    // 할일·휴지통·정렬 기준·필터 저장 (localStorage)
     save() {
         localStorage.setItem(STORAGE_KEYS.items, JSON.stringify(this.items));
         localStorage.setItem(STORAGE_KEYS.trash, JSON.stringify(this.trash));
         localStorage.setItem(STORAGE_KEYS.sortBy, this.sortBy);
+        localStorage.setItem(STORAGE_KEYS.filter, this.filter);
     },
 
     // 저장된 값 불러오기 (없거나 손상된 경우 기본값)
@@ -126,6 +157,9 @@ const todo = {
 
         const sortBy = localStorage.getItem(STORAGE_KEYS.sortBy);
         this.sortBy = SORTERS[sortBy] ? sortBy : "regist";
+
+        const filter = localStorage.getItem(STORAGE_KEYS.filter);
+        this.filter = FILTERS[filter] ? filter : "all";
     },
 
     // 템플릿 조회
@@ -156,9 +190,9 @@ const todo = {
     // 화면 갱신
     render() {
         // 예전에 저장된 항목(done 없음)도 false로 맞춰서 출력
-        const viewItems = this.sorted().map(item => ({ ...item, done: Boolean(item.done) }));
+        const viewItems = this.visible().map(item => ({ ...item, done: Boolean(item.done) }));
         document.getElementById("todo-items").innerHTML =
-            this.listHtml(viewItems, "tpl", "등록된 할 일이 없습니다.");
+            this.listHtml(viewItems, "tpl", FILTERS[this.filter].empty);
 
         document.getElementById("trash-items").innerHTML =
             this.listHtml(this.trash, "tpl-trash", "휴지통이 비어 있습니다.");
@@ -167,6 +201,20 @@ const todo = {
 
         document.querySelectorAll(".sort-action").forEach(btn => {
             btn.setAttribute("aria-pressed", btn.dataset.sort === this.sortBy);
+        });
+
+        document.querySelectorAll(".filter-action").forEach(btn => {
+            btn.setAttribute("aria-pressed", btn.dataset.filter === this.filter);
+        });
+
+        this.renderStats();
+    },
+
+    // 개수만 갱신 (완료 체크처럼 목록을 다시 그리지 않을 때도 사용)
+    renderStats() {
+        const stats = this.stats();
+        document.querySelectorAll("[data-count]").forEach(el => {
+            el.textContent = stats[el.dataset.count];
         });
     },
 };
@@ -220,8 +268,16 @@ window.addEventListener("DOMContentLoaded", () => {
 
         if (btn.classList.contains("toggle-action")) {
             const done = todo.toggle(uid);
-            btn.closest(".todo-card").dataset.done = done;
-            btn.setAttribute("aria-pressed", done);
+
+            // '전체' 보기에서는 카드 1개만 바꾸고(fade 효과 유지) 개수만 갱신,
+            // '진행중'·'완료' 보기에서는 카드가 목록에서 빠져야 하므로 다시 그림
+            if (todo.filter === "all") {
+                btn.closest(".todo-card").dataset.done = done;
+                btn.setAttribute("aria-pressed", done);
+                todo.renderStats();
+            } else {
+                todo.render();
+            }
             return;
         }
 
@@ -247,6 +303,12 @@ window.addEventListener("DOMContentLoaded", () => {
     document.querySelector(".sort-wrap").addEventListener("click", (e) => {
         const btn = e.target.closest(".sort-action");
         if (btn) todo.setSort(btn.dataset.sort);
+    });
+
+    // 보기 필터 버튼
+    document.querySelector(".filter-wrap").addEventListener("click", (e) => {
+        const btn = e.target.closest(".filter-action");
+        if (btn) todo.setFilter(btn.dataset.filter);
     });
 
     // 휴지통 열기 / 닫기
