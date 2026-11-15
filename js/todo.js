@@ -1,11 +1,24 @@
 /**
  * Tdl (Things to do today) - 할일 등록 / 조회 / 수정 / 삭제
+ * + 등록순·날짜순 정렬, 휴지통(복구·영구삭제)
  */
-const STORAGE_KEY = "bsi-todos";
+const STORAGE_KEYS = {
+    items: "bsi-todos",
+    trash: "bsi-todos-trash",
+    sortBy: "bsi-todos-sort",
+};
+
+// 정렬 기준별 비교 함수 (날짜가 같으면 등록순)
+const SORTERS = {
+    regist: (a, b) => a.uid - b.uid,
+    date: (a, b) => a.date.localeCompare(b.date) || a.uid - b.uid,
+};
 
 const todo = {
     items: [],        // 할일 목록 [{ uid, date, title, content }]
-    tpl: null,        // 항목 템플릿 (최초 1회만 읽어서 재사용)
+    trash: [],        // 휴지통 목록
+    sortBy: "regist", // 정렬 기준: regist(등록순) | date(날짜순)
+    tpls: {},         // 템플릿 캐시 (id별로 최초 1회만 읽어서 재사용)
     editingUid: null, // 수정 중인 할일의 uid (없으면 null)
 
     // 할일 1개 조회
@@ -27,10 +40,40 @@ const todo = {
         this.commit();
     },
 
-    // 할일 삭제: uid가 다른 항목만 남김
+    // 할일 삭제: 목록에서 빼서 휴지통으로 이동
     remove(uid) {
+        const target = this.get(uid);
+        if (!target) return;
         this.items = this.items.filter(item => item.uid !== uid);
+        this.trash = [target, ...this.trash];
         this.commit();
+    },
+
+    // 휴지통 -> 목록으로 복구
+    restore(uid) {
+        const target = this.trash.find(item => item.uid === uid);
+        if (!target) return;
+        this.trash = this.trash.filter(item => item.uid !== uid);
+        this.items = [...this.items, target];
+        this.commit();
+    },
+
+    // 휴지통에서 영구 삭제
+    destroy(uid) {
+        this.trash = this.trash.filter(item => item.uid !== uid);
+        this.commit();
+    },
+
+    // 정렬 기준 변경
+    setSort(sortBy) {
+        if (!SORTERS[sortBy]) return;
+        this.sortBy = sortBy;
+        this.commit();
+    },
+
+    // 정렬된 목록 (원본 배열은 그대로 두고 복사본을 정렬)
+    sorted() {
+        return [...this.items].sort(SORTERS[this.sortBy]);
     },
 
     // 변경 사항 저장 후 화면 갱신
@@ -39,49 +82,73 @@ const todo = {
         this.render();
     },
 
-    // 할일 저장 (localStorage)
+    // 할일·휴지통·정렬 기준 저장 (localStorage)
     save() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items));
+        localStorage.setItem(STORAGE_KEYS.items, JSON.stringify(this.items));
+        localStorage.setItem(STORAGE_KEYS.trash, JSON.stringify(this.trash));
+        localStorage.setItem(STORAGE_KEYS.sortBy, this.sortBy);
     },
 
-    // 저장된 할일 불러오기 (저장값이 없거나 깨져 있으면 빈 목록)
+    // 저장된 값 불러오기 (없거나 손상된 경우 기본값)
     load() {
-        try {
-            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            this.items = Array.isArray(saved) ? saved : [];
-        } catch {
-            this.items = [];
-        }
+        const readList = (key) => {
+            try {
+                const saved = JSON.parse(localStorage.getItem(key));
+                return Array.isArray(saved) ? saved : [];
+            } catch {
+                return [];
+            }
+        };
+        this.items = readList(STORAGE_KEYS.items);
+        this.trash = readList(STORAGE_KEYS.trash);
+
+        const sortBy = localStorage.getItem(STORAGE_KEYS.sortBy);
+        this.sortBy = SORTERS[sortBy] ? sortBy : "regist";
     },
 
     // 템플릿 조회
-    getTpl() {
-        if (!this.tpl) {
-            this.tpl = document.getElementById("tpl").innerHTML;
+    getTpl(id) {
+        if (!this.tpls[id]) {
+            this.tpls[id] = document.getElementById(id).innerHTML;
         }
-        return this.tpl;
+        return this.tpls[id];
     },
 
     // 할일 객체 -> 템플릿의 ${key} 자리에 값을 채운 HTML 문자열
-    toHtml(item) {
+    toHtml(item, tplId) {
         return Object.entries(item).reduce(
             (html, [key, value]) => html.replaceAll(`\${${key}}`, value),
-            this.getTpl()
+            this.getTpl(tplId)
         );
+    },
+
+    // 목록 HTML (비어 있으면 안내 문구)
+    listHtml(items, tplId, emptyText) {
+        return items.length
+            ? items.map(item => this.toHtml(item, tplId)).join("")
+            : `<li class="empty">${emptyText}</li>`;
     },
 
     // 화면 갱신
     render() {
-        const listEl = document.getElementById("todo-items");
-        listEl.innerHTML = this.items.length
-            ? this.items.map(item => this.toHtml(item)).join("")
-            : `<li class="empty">등록된 할 일이 없습니다.</li>`;
+        document.getElementById("todo-items").innerHTML =
+            this.listHtml(this.sorted(), "tpl", "등록된 할 일이 없습니다.");
+
+        document.getElementById("trash-items").innerHTML =
+            this.listHtml(this.trash, "tpl-trash", "휴지통이 비어 있습니다.");
+
+        document.getElementById("trash-count").textContent = this.trash.length;
+
+        document.querySelectorAll(".sort-action").forEach(btn => {
+            btn.setAttribute("aria-pressed", btn.dataset.sort === this.sortBy);
+        });
     },
 };
 
 window.addEventListener("DOMContentLoaded", () => {
     const form = document.forms.frmTodo;
     const submitBtn = form.querySelector("button[type='submit']");
+    const trashModal = document.getElementById("trash-modal");
 
     // 입력 항목(name)과 비어 있을 때 보여줄 메시지
     const fields = {
@@ -126,8 +193,7 @@ window.addEventListener("DOMContentLoaded", () => {
         const uid = Number(btn.dataset.uid);
 
         if (btn.classList.contains("delete-action")) {
-            if (!confirm("정말 삭제하겠습니까?")) return;
-            todo.remove(uid);
+            todo.remove(uid); // 휴지통으로 이동하므로 확인 없이 처리
             if (todo.editingUid === uid) resetForm();
             return;
         }
@@ -141,6 +207,35 @@ window.addEventListener("DOMContentLoaded", () => {
             todo.editingUid = uid;
             submitBtn.textContent = "수정하기";
             form.task.focus();
+        }
+    });
+
+    // 정렬 버튼
+    document.querySelector(".sort-wrap").addEventListener("click", (e) => {
+        const btn = e.target.closest(".sort-action");
+        if (btn) todo.setSort(btn.dataset.sort);
+    });
+
+    // 휴지통 열기 / 닫기
+    document.getElementById("open-trash").addEventListener("click", () => trashModal.showModal());
+    document.getElementById("close-trash").addEventListener("click", () => trashModal.close());
+
+    // 휴지통 안의 복구 / 영구삭제 버튼 + 바깥(배경) 클릭 시 닫기 (이벤트 위임)
+    trashModal.addEventListener("click", (e) => {
+        if (e.target === trashModal) {
+            trashModal.close();
+            return;
+        }
+
+        const btn = e.target.closest("button[data-uid]");
+        if (!btn) return;
+
+        const uid = Number(btn.dataset.uid);
+
+        if (btn.classList.contains("restore-action")) {
+            todo.restore(uid);
+        } else if (btn.classList.contains("destroy-action")) {
+            if (confirm("영구 삭제하면 되돌릴 수 없습니다. 삭제할까요?")) todo.destroy(uid);
         }
     });
 

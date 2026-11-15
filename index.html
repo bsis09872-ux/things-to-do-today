@@ -40,8 +40,38 @@
             <button type="submit" class="bg-taupe-500 hover:bg-taupe-700 text-white font-bold py-2 px-4 rounded-lg block mx-auto cursor-pointer w-64">등록하기</button>
         </form>
 
+        <!-- 정렬 / 휴지통 -->
+        <div class="flex justify-between items-center mx-8 mt-4">
+            <div class="sort-wrap">
+                <button type="button" class="sort-action cursor-pointer aria-pressed:font-bold aria-pressed:underline" data-sort="regist" aria-pressed="true">등록순</button>
+                <span aria-hidden="true">|</span>
+                <button type="button" class="sort-action cursor-pointer aria-pressed:font-bold aria-pressed:underline" data-sort="date" aria-pressed="false">날짜순</button>
+            </div>
+            <button type="button" id="open-trash" class="cursor-pointer" aria-haspopup="dialog">
+                <i class="fa-solid fa-trash" aria-hidden="true"></i> 휴지통 <span id="trash-count">0</span>
+            </button>
+        </div>
+
         <!-- 메인파트2 : 등록된 할일 목록 (js/todo.js에서 렌더링) -->
         <ul id="todo-items" class="m-4 p-4 grid md:grid-cols-2 gap-4"></ul>
+
+        <!-- 휴지통 모달 -->
+        <dialog id="trash-modal" aria-labelledby="trash-title" class="m-auto w-[90%] max-w-lg rounded-lg p-6 backdrop:bg-black/40">
+            <h2 id="trash-title" class="text-xl mb-4">휴지통</h2>
+            <ul id="trash-items" class="flex flex-col gap-3 mb-4"></ul>
+            <button type="button" id="close-trash" class="block mx-auto px-6 py-2 border rounded-lg cursor-pointer">닫기</button>
+        </dialog>
+
+        <script type="text/html" id="tpl-trash">
+            <li id="trash-${uid}" class="border border-gray-300 rounded-lg p-3">
+                <div>[${date}]${title}</div>
+                <div class="text-sm mb-2">${content}</div>
+                <div class="flex gap-2">
+                    <button type="button" class="restore-action grow py-1 border rounded cursor-pointer" data-uid="${uid}">복구</button>
+                    <button type="button" class="destroy-action grow py-1 border rounded cursor-pointer" data-uid="${uid}">영구삭제</button>
+                </div>
+            </li>
+        </script>
 
         <script type="text/html" id="tpl">
             <li id="item-${uid}" class="border border-grey-300 rounded-lg group p-4">
