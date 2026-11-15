@@ -63,6 +63,5 @@ JS는 `data-done`, `aria-pressed`, `hidden` 같은 **속성으로 상태만 표�
     ├── retrospective.md    # 회고
     ├── troubleshooting.md  # 트러블슈팅
     ├── credits.md          # 작업 도구 · 참고 · 출처
-    ├── demo/               # 시연 영상
-    └── images/             # 화면 · 트러블슈팅 · 영상 썸네일 캡처
+    └── images/             # 화면 · 트러블슈팅 캡처
 ```
